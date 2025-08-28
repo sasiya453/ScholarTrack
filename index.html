@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>ScholarTrack</title>
+  <title>ScholarTrack - Personal Productivity Dashboard</title>
+
   <!-- Tailwind -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
   <!-- Icons -->
@@ -14,260 +15,159 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
   <style>
-    :root{
-      --bg:#eef2f7;
-      --card:#ffffff;
-      --text:#111827;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-      --navBg:rgba(255,255,255,.8);
-      --glassBg:rgba(255,255,255,.7);
-      --glassBorder:rgba(255,255,255,.6);
-      --gradientStart:#6366f1;
-      --gradientMid:#3b82f6;
-      --gradientEnd:#06b6d4;
-      --toastBg:#1f2937;
-      --tooltipBg:rgba(17,24,39,.9);
-      --gridY:rgba(0,0,0,.06);
-      --gridX:rgba(0,0,0,.04);
+    /* Background */
+    body {
+      background: radial-gradient(1200px 600px at 20% -10%, #c7d2fe55, transparent),
+                  radial-gradient(1200px 600px at 100% 10%, #fbcfe855, transparent),
+                  #e5e7eb;
     }
-    .dark{
-      --bg:#0f172a;
-      --card:#0b1324;
-      --text:#e5e7eb;
-      --muted:#cbd5e1;
-      --border:#1f2937;
-      --navBg:rgba(17,24,39,.6);
-      --glassBg:rgba(17,24,39,.6);
-      --glassBorder:rgba(31,41,55,.6);
-      --gradientStart:#3730a3;
-      --gradientMid:#1d4ed8;
-      --gradientEnd:#0ea5e9;
-      --toastBg:#111827;
-      --tooltipBg:rgba(255,255,255,.12);
-      --gridY:rgba(255,255,255,.08);
-      --gridX:rgba(255,255,255,.06);
+    /* App shell (mobile card look) */
+    .app-shell {
+      background: #ffffff;
+      border-radius: 28px;
+      box-shadow:
+        0 20px 60px rgba(31, 41, 55, 0.15),
+        0 2px 8px rgba(31, 41, 55, 0.05);
+      overflow: hidden;
     }
-
-    body { background: var(--bg); color: var(--text); }
-    .card-shell { background: var(--card); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 20px 60px rgba(31,41,55,.12), 0 8px 20px rgba(31,41,55,.08); }
-    .nav-surface { background: var(--navBg); border-color: var(--border); }
-    .glass { background: var(--glassBg); border: 1px solid var(--glassBorder); backdrop-filter: blur(10px); }
-    .gradient-card { background: linear-gradient(135deg, var(--gradientStart) 0%, var(--gradientMid) 50%, var(--gradientEnd) 100%); }
-    .chart-container { position: relative; height: 16rem; }
+    .glass {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+    .gradient-card {
+      background: linear-gradient(135deg, #6366f1 0%, #3b82f6 50%, #06b6d4 100%);
+    }
+    .chart-container { position: relative; height: 14rem; }
     @media (min-width: 768px) { .chart-container { height: 22rem; } }
-    .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 12px); }
 
-    /* Animations */
-    @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0);} }
-    .animate-fadeUp { animation: fadeUp .6s ease-out both; }
-    @keyframes floaty { 0% { transform: translateY(0); } 50% { transform: translateY(-6px);} 100% { transform: translateY(0);} }
-    .animate-float { animation: floaty 5s ease-in-out infinite; }
+    /* Safe areas for iOS */
+    .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 16px); }
+    .safe-top { padding-top: calc(env(safe-area-inset-top)); }
 
-    /* Chips for line selection */
-    .line-chip { color:#fff; border-radius:9999px; padding:.35rem .75rem; font-size:.85rem; font-weight:600; display:inline-flex; align-items:center; gap:.4rem; box-shadow: 0 6px 16px rgba(0,0,0,.12); opacity:.95; transition: all .25s ease; }
-    .line-chip[aria-pressed="false"] { filter: grayscale(.2) brightness(.9); opacity:.55; }
-
-    /* Auth illustration */
-    .auth-illustration {
-      background-image: url('https://img.freepik.com/free-photo/japan-background-digital-art_23-2151546137.jpg?semt=ais_hybrid&w=740&q=80');
-      background-size: cover; background-position: center;
+    /* Bottom nav and FAB */
+    .fab {
+      box-shadow: 0 12px 24px rgba(59, 130, 246, 0.45), 0 8px 10px rgba(59, 130, 246, 0.25);
     }
 
-    /* Password eye */
-    .input-icon-btn { position:absolute; right:.75rem; top:50%; transform:translateY(-50%); color:#9ca3af; cursor:pointer; }
-
-    /* Dark overrides for common Tailwind text/bg */
-    .dark .text-gray-900, .dark .text-gray-800 { color:#e5e7eb !important; }
-    .dark .text-gray-700, .dark .text-gray-600, .dark .text-gray-500 { color:#cbd5e1 !important; }
-    .dark .bg-gray-100 { background-color:#11182733 !important; }
-    .dark .bg-gray-200 { background-color:#1f2937 !important; color:#cbd5e1; }
-    .dark .bg-indigo-50 { background-color: rgba(99,102,241,.12) !important; }
-    .dark .bg-purple-50 { background-color: rgba(139,92,246,.12) !important; }
-    .dark .bg-pink-50 { background-color: rgba(236,72,153,.12) !important; }
-    .dark input, .dark select, .dark textarea { background-color:#0f172a; color:#e5e7eb; border-color:#374151; }
-    .dark input::placeholder { color:#94a3b8; }
-
-    /* Toast */
-    #notification { pointer-events:none; background: var(--toastBg); }
-    /* Theme FAB */
-    .theme-fab { position: fixed; z-index: 50; right: 1rem; top: 1rem; background: var(--card); color: var(--text); border:1px solid var(--border); box-shadow: 0 10px 24px rgba(0,0,0,.15); }
+    /* Toggle active */
+    .toggle-btn.active { background-color: #4f46e5; color: #fff; }
   </style>
 </head>
 <body class="min-h-screen">
 
-  <!-- Theme toggle -->
-  <button id="theme-toggle" class="theme-fab rounded-full px-3 py-2 flex items-center gap-2">
-    <i id="theme-icon" class="fas fa-moon"></i><span class="hidden sm:inline">Dark</span>
-  </button>
-
-  <!-- Top Nav (desktop) -->
-  <nav class="hidden md:block nav-surface backdrop-filter backdrop-blur sticky top-0 z-30 border-b">
-    <div class="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-2 text-indigo-500">
-        <i class="fas fa-chart-line text-xl"></i>
-        <span class="text-lg font-bold text-gray-900">ScholarTrack</span>
-      </div>
-      <div class="flex items-center gap-3">
-        <div id="auth-buttons" class="flex gap-3">
-          <button id="login-btn" class="px-4 py-2 rounded-lg hover:bg-indigo-50 text-gray-700">Login</button>
-          <button id="signup-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Sign Up</button>
-        </div>
-        <div id="user-info" class="hidden items-center space-x-4">
-          <span id="user-email" class="font-medium text-gray-700"></span>
-          <button id="logout-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Logout</button>
-        </div>
-      </div>
-    </div>
-  </nav>
-
-  <main class="px-4 sm:px-6 py-6">
-    <!-- AUTH SECTION -->
-    <section id="auth-section" class="max-w-6xl mx-auto animate-fadeUp">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-0 card-shell overflow-hidden">
-        <!-- Left: Form -->
-        <div class="p-6 sm:p-10">
-          <!-- LOGIN -->
-          <div id="login-form" class="auth-form">
-            <h2 class="text-3xl font-bold text-gray-900 mb-1">Hello Again!</h2>
-            <p class="text-gray-500 mb-6">Let’s get you back on track.</p>
-
-            <div class="space-y-4">
-              <div>
-                <label class="block text-gray-700 mb-1" for="login-email">Email</label>
-                <div class="relative">
-                  <input type="email" id="login-email" placeholder="you@example.com" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required/>
-                </div>
-              </div>
-              <div>
-                <label class="block text-gray-700 mb-1" for="login-password">Password</label>
-                <div class="relative">
-                  <input type="password" id="login-password" placeholder="••••••••" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required/>
-                  <span id="login-eye" class="input-icon-btn"><i class="far fa-eye"></i></span>
-                </div>
-              </div>
-              <button id="login-submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 transform hover:scale-[1.01] transition">Sign In</button>
-
-              <div class="flex items-center gap-3 my-2">
-                <div class="flex-1 h-px bg-gray-200"></div>
-                <span class="text-gray-500 text-sm">Or continue with</span>
-                <div class="flex-1 h-px bg-gray-200"></div>
-              </div>
-
-              <div class="grid grid-cols-3 gap-3">
-                <button id="oauth-google" class="w-full py-2 border rounded-xl hover:bg-gray-50 flex items-center justify-center gap-2">
-                  <i class="fab fa-google text-red-500"></i><span>Google</span>
-                </button>
-                <button id="oauth-apple" class="w-full py-2 border rounded-xl hover:bg-gray-50 flex items-center justify-center gap-2">
-                  <i class="fab fa-apple text-gray-900"></i><span>Apple</span>
-                </button>
-                <button id="oauth-facebook" class="w-full py-2 border rounded-xl hover:bg-gray-50 flex items-center justify-center gap-2">
-                  <i class="fab fa-facebook text-blue-600"></i><span>Facebook</span>
-                </button>
-              </div>
-
-              <div class="text-center text-gray-600 pt-2">Don’t have an account?
-                <a href="#" id="show-signup" class="text-indigo-600 font-medium">Create one</a>
-              </div>
-            </div>
-          </div>
-
-          <!-- SIGNUP -->
-          <div id="signup-form" class="auth-form hidden">
-            <h2 class="text-3xl font-bold text-gray-900 mb-1">Create Account</h2>
-            <p class="text-gray-500 mb-6">Start your learning journey.</p>
-            <div class="space-y-4">
-              <div>
-                <label class="block text-gray-700 mb-1" for="signup-email">Email</label>
-                <input type="email" id="signup-email" placeholder="you@example.com" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required/>
-              </div>
-              <div>
-                <label class="block text-gray-700 mb-1" for="signup-password">Password</label>
-                <div class="relative">
-                  <input type="password" id="signup-password" placeholder="••••••••" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required/>
-                  <span id="signup-eye" class="input-icon-btn"><i class="far fa-eye"></i></span>
-                </div>
-              </div>
-              <div>
-                <label class="block text-gray-700 mb-1" for="signup-confirm">Confirm Password</label>
-                <div class="relative">
-                  <input type="password" id="signup-confirm" placeholder="••••••••" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" required/>
-                  <span id="signup-eye2" class="input-icon-btn"><i class="far fa-eye"></i></span>
-                </div>
-              </div>
-              <button id="signup-submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 transform hover:scale-[1.01] transition">Sign Up</button>
-
-              <div class="flex items-center gap-3 my-2">
-                <div class="flex-1 h-px bg-gray-200"></div>
-                <span class="text-gray-500 text-sm">Or continue with</span>
-                <div class="flex-1 h-px bg-gray-200"></div>
-              </div>
-              <div class="grid grid-cols-3 gap-3">
-                <button id="oauth-google-2" class="w-full py-2 border rounded-xl hover:bg-gray-50 flex items-center justify-center gap-2">
-                  <i class="fab fa-google text-red-500"></i><span>Google</span>
-                </button>
-                <button id="oauth-apple-2" class="w-full py-2 border rounded-xl hover:bg-gray-50 flex items-center justify-center gap-2">
-                  <i class="fab fa-apple text-gray-900"></i><span>Apple</span>
-                </button>
-                <button id="oauth-facebook-2" class="w-full py-2 border rounded-xl hover:bg-gray-50 flex items-center justify-center gap-2">
-                  <i class="fab fa-facebook text-blue-600"></i><span>Facebook</span>
-                </button>
-              </div>
-
-              <div class="text-center text-gray-600 pt-2">Already registered?
-                <a href="#" id="show-login" class="text-indigo-600 font-medium">Sign in</a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right: Illustration -->
-        <div class="hidden md:block auth-illustration"></div>
-      </div>
-    </section>
-
-    <!-- DASHBOARD -->
-    <section id="dashboard" class="hidden max-w-7xl mx-auto space-y-6">
-      <!-- Mobile header -->
-      <div class="md:hidden flex items-center justify-between px-1">
+  <!-- Top bar (mobile app style) -->
+  <header class="pt-4 px-4 sm:px-6 md:hidden safe-top">
+    <div class="max-w-md mx-auto app-shell">
+      <div class="flex items-center justify-between px-5 py-4">
         <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <div class="flex items-center gap-3">
-          <span id="mobile-user" class="text-sm text-gray-500"></span>
+        <div class="flex items-center space-x-3">
+          <span id="mobile-user-email" class="text-sm text-gray-500"></span>
           <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
             <i class="fas fa-user"></i>
           </div>
         </div>
       </div>
+    </div>
+  </header>
 
-      <!-- Summary gradient card -->
-      <div class="gradient-card text-white rounded-2xl p-5 md:p-6 animate-float">
-        <div class="flex items-start justify-between">
-          <div>
-            <p class="text-indigo-100">This Week</p>
-            <p class="text-3xl md:text-4xl font-extrabold" id="summary-title">0h 0m</p>
-          </div>
-          <i class="fas fa-chart-line text-2xl opacity-90"></i>
-        </div>
-        <div class="mt-4">
-          <div class="w-full bg-white/25 rounded-full h-2 overflow-hidden">
-            <div id="summary-progress" class="bg-white h-2 rounded-full transition-all" style="width:0%"></div>
-          </div>
-          <div class="flex justify-between text-indigo-100 text-sm mt-2">
-            <span id="summary-label">Daily target: 3h</span>
-            <span id="summary-percent">0%</span>
-          </div>
-        </div>
+  <!-- Desktop navigation -->
+  <nav class="hidden md:block bg-white/80 backdrop-filter backdrop-blur sticky top-0 z-30 border-b border-gray-100">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2 text-indigo-600">
+        <i class="fas fa-chart-line text-xl"></i>
+        <span class="text-lg font-bold text-gray-800">ScholarTrack</span>
       </div>
+      <div id="auth-buttons" class="flex space-x-3">
+        <button id="login-btn" class="px-4 py-2 rounded-lg hover:bg-indigo-50 text-gray-700">Login</button>
+        <button id="signup-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Sign Up</button>
+      </div>
+      <div id="user-info" class="hidden items-center space-x-4">
+        <span id="user-email" class="font-medium text-gray-700"></span>
+        <button id="logout-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Logout</button>
+      </div>
+    </div>
+  </nav>
 
-      <!-- Inputs + Chart -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- Inputs -->
-        <div class="lg:col-span-5">
-          <div class="card-shell p-5 md:p-6 animate-fadeUp">
-            <h3 class="text-xl font-bold text-gray-900 mb-4">Log Today's Metrics</h3>
+  <main class="px-4 sm:px-6 py-6">
+    <!-- Mobile app container -->
+    <div class="md:hidden max-w-md mx-auto app-shell">
+      <!-- Auth Section (mobile) -->
+      <section id="auth-section" class="px-5 pb-6">
+        <div id="login-form" class="auth-form">
+          <h2 class="text-xl font-bold text-gray-900 mt-2 mb-4">Welcome back</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-gray-700 mb-1" for="login-email">Email</label>
+              <input type="email" id="login-email" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="you@example.com" required/>
+            </div>
+            <div>
+              <label class="block text-gray-700 mb-1" for="login-password">Password</label>
+              <input type="password" id="login-password" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••" required/>
+            </div>
+            <button id="login-submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700">Login</button>
+            <p class="text-center text-gray-600">
+              Don't have an account?
+              <a href="#" id="show-signup" class="text-indigo-600 font-medium">Sign Up</a>
+            </p>
+          </div>
+        </div>
 
-            <div class="space-y-4">
-              <div class="flex items-center justify-between bg-indigo-50 rounded-xl p-3 transition hover:shadow">
+        <div id="signup-form" class="auth-form hidden">
+          <h2 class="text-xl font-bold text-gray-900 mt-2 mb-4">Create your account</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-gray-700 mb-1" for="signup-email">Email</label>
+              <input type="email" id="signup-email" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="you@example.com" required/>
+            </div>
+            <div>
+              <label class="block text-gray-700 mb-1" for="signup-password">Password</label>
+              <input type="password" id="signup-password" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••" required/>
+            </div>
+            <div>
+              <label class="block text-gray-700 mb-1" for="signup-confirm">Confirm Password</label>
+              <input type="password" id="signup-confirm" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••" required/>
+            </div>
+            <button id="signup-submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700">Sign Up</button>
+            <p class="text-center text-gray-600">
+              Already have an account?
+              <a href="#" id="show-login" class="text-indigo-600 font-medium">Login</a>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dashboard (mobile) -->
+      <section id="dashboard" class="hidden">
+        <!-- Summary card -->
+        <div class="px-5">
+          <div class="gradient-card text-white rounded-2xl p-5 mx-auto">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-indigo-100">This Week</p>
+                <p class="text-3xl font-bold" id="summary-title">$ Study</p>
+              </div>
+              <i class="fas fa-chart-line text-2xl opacity-80"></i>
+            </div>
+            <div class="mt-4">
+              <div class="w-full bg-white/20 rounded-full h-2">
+                <div id="summary-progress" class="bg-white h-2 rounded-full" style="width: 0%"></div>
+              </div>
+              <div class="flex justify-between text-indigo-100 text-sm mt-2">
+                <span id="summary-label">Daily target: 3h</span>
+                <span id="summary-percent">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cards stack -->
+        <div class="px-5 mt-5 space-y-5">
+          <!-- Daily inputs -->
+          <div class="bg-white rounded-2xl p-5 border border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Log Today</h3>
+            <div class="grid grid-cols-1 gap-4">
+              <div class="flex items-center justify-between bg-indigo-50 rounded-xl p-3">
                 <div class="flex items-center space-x-3">
                   <div class="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center"><i class="fas fa-book"></i></div>
                   <span class="font-medium text-gray-800">Study</span>
@@ -279,7 +179,7 @@
                 </div>
               </div>
 
-              <div class="flex items-center justify-between bg-purple-50 rounded-xl p-3 transition hover:shadow">
+              <div class="flex items-center justify-between bg-purple-50 rounded-xl p-3">
                 <div class="flex items-center space-x-3">
                   <div class="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fas fa-mobile-alt"></i></div>
                   <span class="font-medium text-gray-800">Screen</span>
@@ -291,70 +191,209 @@
                 </div>
               </div>
 
-              <div class="flex items-center justify-between bg-pink-50 rounded-xl p-3 transition hover:shadow">
+              <div class="flex items-center justify-between bg-pink-50 rounded-xl p-3">
                 <div class="flex items-center space-x-3">
                   <div class="w-9 h-9 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center"><i class="fas fa-tasks"></i></div>
                   <span class="font-medium text-gray-800">MCQ</span>
                 </div>
-                <input type="number" id="mcq-score" min="0" max="10" class="w-24 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0-10">
+                <div class="flex items-center">
+                  <input type="number" id="mcq-score" min="0" max="10" class="w-20 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0-10">
+                </div>
               </div>
             </div>
+          </div>
 
-            <div class="mt-5 flex items-center justify-between">
-              <button id="save-metrics" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transform hover:scale-[1.01] transition">
-                <i class="fas fa-save mr-2"></i>Save
-              </button>
-              <span class="text-gray-400 text-sm">Tap + hold to edit later</span>
+          <!-- Charts -->
+          <div class="bg-white rounded-2xl p-5 border border-gray-100">
+            <div class="flex flex-wrap gap-2 mb-4">
+              <button class="toggle-btn px-3 py-1.5 bg-gray-100 rounded-full text-sm active" data-metric="study"><i class="fas fa-book mr-1"></i>Study</button>
+              <button class="toggle-btn px-3 py-1.5 bg-gray-100 rounded-full text-sm active" data-metric="screen"><i class="fas fa-mobile-alt mr-1"></i>Screen</button>
+              <button class="toggle-btn px-3 py-1.5 bg-gray-100 rounded-full text-sm active" data-metric="mcq"><i class="fas fa-tasks mr-1"></i>MCQ</button>
+            </div>
+            <div class="chart-container">
+              <canvas id="performance-chart"></canvas>
+            </div>
+          </div>
+
+          <!-- Averages -->
+          <div class="grid grid-cols-1 gap-4">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl p-5">
+              <p class="text-indigo-100">Avg. Study</p>
+              <p class="text-3xl font-bold" id="avg-study">0h 0m</p>
+            </div>
+            <div class="bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-2xl p-5">
+              <p class="text-purple-100">Avg. Screen</p>
+              <p class="text-3xl font-bold" id="avg-screen">0h 0m</p>
+            </div>
+            <div class="bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-2xl p-5">
+              <p class="text-pink-100">Avg. MCQ</p>
+              <p class="text-3xl font-bold" id="avg-mcq">0/10</p>
+            </div>
+          </div>
+
+          <!-- Spacer for bottom nav -->
+          <div class="h-24"></div>
+        </div>
+
+        <!-- Bottom Nav (mobile) -->
+        <div class="md:hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 w-[92%] max-w-md">
+          <div class="glass rounded-2xl px-6 py-3 safe-bottom flex justify-between items-center">
+            <button class="text-gray-500 hover:text-indigo-600"><i class="fas fa-home text-lg"></i></button>
+            <button class="text-gray-500 hover:text-indigo-600"><i class="fas fa-chart-area text-lg"></i></button>
+
+            <!-- FAB -->
+            <button id="fab-save" class="fab -mt-10 w-14 h-14 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700">
+              <i class="fas fa-plus"></i>
+            </button>
+
+            <button class="text-gray-500 hover:text-indigo-600"><i class="fas fa-map-marker-alt text-lg"></i></button>
+            <button id="mobile-logout" class="text-gray-500 hover:text-red-600"><i class="fas fa-user text-lg"></i></button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Desktop Dashboard (same features, wider layout) -->
+    <div class="hidden md:block max-w-7xl mx-auto">
+      <!-- Hero -->
+      <section class="mb-8">
+        <div class="bg-white rounded-2xl p-6 border border-gray-100 flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-800">Track Your Learning Journey</h1>
+            <p class="text-gray-600 mt-1">Monitor study habits, screen time, and MCQ scores with a clean dashboard.</p>
+          </div>
+          <div class="gradient-card text-white rounded-xl p-5 w-80">
+            <p class="text-indigo-100">This Week</p>
+            <p class="text-3xl font-bold" id="summary-title-desktop">$ Study</p>
+            <div class="mt-3">
+              <div class="w-full bg-white/20 rounded-full h-2">
+                <div id="summary-progress-desktop" class="bg-white h-2 rounded-full" style="width:0%"></div>
+              </div>
+              <div class="flex justify-between text-indigo-100 text-sm mt-2">
+                <span id="summary-label-desktop">Daily target: 3h</span>
+                <span id="summary-percent-desktop">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="auth-section-desktop" class="bg-white rounded-2xl p-6 border border-gray-100 mb-8">
+        <!-- Reuse mobile auth forms inside desktop container -->
+        <div class="grid grid-cols-2 gap-8">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Login</h2>
+            <div class="space-y-4">
+              <input type="email" id="login-email" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="you@example.com"/>
+              <input type="password" id="login-password" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••"/>
+              <button id="login-submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700">Login</button>
+              <p class="text-gray-600">Don't have an account?
+                <a href="#" id="show-signup" class="text-indigo-600 font-medium">Sign Up</a>
+              </p>
+            </div>
+          </div>
+          <div id="signup-form-desktop">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Sign Up</h2>
+            <div class="space-y-4">
+              <input type="email" id="signup-email" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="you@example.com"/>
+              <input type="password" id="signup-password" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••"/>
+              <input type="password" id="signup-confirm" class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••"/>
+              <button id="signup-submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700">Sign Up</button>
+              <p class="text-gray-600">Already have an account?
+                <a href="#" id="show-login" class="text-indigo-600 font-medium">Login</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="dashboard-desktop" class="hidden">
+        <!-- Inputs + Chart -->
+        <div class="grid grid-cols-12 gap-6 mb-8">
+          <div class="col-span-12 lg:col-span-5">
+            <div class="bg-white rounded-2xl p-6 border border-gray-100">
+              <h3 class="text-xl font-bold text-gray-800 mb-4">Log Today's Metrics</h3>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between bg-indigo-50 rounded-xl p-3">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center"><i class="fas fa-book"></i></div>
+                    <span class="font-medium text-gray-800">Study</span>
+                  </div>
+                  <div class="flex items-center">
+                    <input type="number" id="study-hours" min="0" max="23" class="w-20 px-3 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="h">
+                    <span class="bg-gray-200 px-3 py-2">:</span>
+                    <input type="number" id="study-minutes" min="0" max="59" class="w-20 px-3 py-2 border rounded-r-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="m">
+                  </div>
+                </div>
+                <div class="flex items-center justify-between bg-purple-50 rounded-xl p-3">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fas fa-mobile-alt"></i></div>
+                    <span class="font-medium text-gray-800">Screen</span>
+                  </div>
+                  <div class="flex items-center">
+                    <input type="number" id="screen-hours" min="0" max="23" class="w-20 px-3 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="h">
+                    <span class="bg-gray-200 px-3 py-2">:</span>
+                    <input type="number" id="screen-minutes" min="0" max="59" class="w-20 px-3 py-2 border rounded-r-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="m">
+                  </div>
+                </div>
+                <div class="flex items-center justify-between bg-pink-50 rounded-xl p-3">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center"><i class="fas fa-tasks"></i></div>
+                    <span class="font-medium text-gray-800">MCQ</span>
+                  </div>
+                  <div class="flex items-center">
+                    <input type="number" id="mcq-score" min="0" max="10" class="w-24 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0-10">
+                  </div>
+                </div>
+              </div>
+              <div class="mt-5 text-right">
+                <button id="save-metrics" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">
+                  <i class="fas fa-save mr-2"></i>Save
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-span-12 lg:col-span-7">
+            <div class="bg-white rounded-2xl p-6 border border-gray-100">
+              <div class="flex flex-wrap gap-2 mb-4">
+                <button class="toggle-btn px-3 py-1.5 bg-gray-100 rounded-full text-sm active" data-metric="study"><i class="fas fa-book mr-1"></i>Study</button>
+                <button class="toggle-btn px-3 py-1.5 bg-gray-100 rounded-full text-sm active" data-metric="screen"><i class="fas fa-mobile-alt mr-1"></i>Screen</button>
+                <button class="toggle-btn px-3 py-1.5 bg-gray-100 rounded-full text-sm active" data-metric="mcq"><i class="fas fa-tasks mr-1"></i>MCQ</button>
+              </div>
+              <div class="chart-container">
+                <canvas id="performance-chart"></canvas>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Chart -->
-        <div class="lg:col-span-7">
-          <div class="card-shell p-5 md:p-6 animate-fadeUp">
-            <div class="flex flex-wrap items-center gap-2 mb-4" id="line-selector"></div>
-            <div class="chart-container"><canvas id="performance-chart"></canvas></div>
-            <div class="flex flex-wrap items-center gap-3 mt-4">
-              <button id="download-chart" class="px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-black">
-                <i class="fas fa-download mr-2"></i>Download PNG
-              </button>
-              <span class="text-sm text-gray-400">Only visible lines will be included</span>
-            </div>
+        <!-- Averages -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl p-6">
+            <p class="text-indigo-100">Avg. Study</p>
+            <p class="text-4xl font-bold" id="avg-study">0h 0m</p>
+          </div>
+          <div class="bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-2xl p-6">
+            <p class="text-purple-100">Avg. Screen</p>
+            <p class="text-4xl font-bold" id="avg-screen">0h 0m</p>
+          </div>
+          <div class="bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-2xl p-6">
+            <p class="text-pink-100">Avg. MCQ</p>
+            <p class="text-4xl font-bold" id="avg-mcq">0/10</p>
           </div>
         </div>
-      </div>
-
-      <!-- Averages -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl p-6 animate-fadeUp">
-          <p class="text-indigo-100">Avg. Study</p>
-          <p class="text-4xl font-bold" id="avg-study">0h 0m</p>
-        </div>
-        <div class="bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-2xl p-6 animate-fadeUp">
-          <p class="text-purple-100">Avg. Screen</p>
-          <p class="text-4xl font-bold" id="avg-screen">0h 0m</p>
-        </div>
-        <div class="bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-2xl p-6 animate-fadeUp">
-          <p class="text-pink-100">Avg. MCQ</p>
-          <p class="text-4xl font-bold" id="avg-mcq">0/10</p>
-        </div>
-      </div>
-
-      <!-- Bottom nav (mobile) -->
-      <div class="md:hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 w-[92%]">
-        <div class="glass rounded-2xl px-6 py-3 safe-bottom flex justify-between items-center">
-          <button class="text-gray-500 hover:text-indigo-600"><i class="fas fa-home text-lg"></i></button>
-          <button class="text-gray-500 hover:text-indigo-600"><i class="fas fa-chart-area text-lg"></i></button>
-          <button id="fab-mobile-save" class="w-14 h-14 -mt-10 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 shadow-xl"><i class="fas fa-plus"></i></button>
-          <button class="text-gray-500 hover:text-indigo-600"><i class="fas fa-map-marker-alt text-lg"></i></button>
-          <button id="mobile-logout" class="text-gray-500 hover:text-red-600"><i class="fas fa-user text-lg"></i></button>
-        </div>
-      </div>
-    </section>
+      </section>
+    </div>
   </main>
 
+  <!-- Footer -->
+  <footer class="hidden md:block text-gray-500 text-center py-8">
+    © 2025 ScholarTrack
+  </footer>
+
   <!-- Toast -->
-  <div id="notification" class="fixed bottom-4 right-4 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transform translate-y-4 transition-all duration-300">
+  <div id="notification" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transform translate-y-4 transition-all duration-300">
     <span id="notification-message"></span>
   </div>
 
@@ -364,292 +403,330 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjY2JobWZpZXV3eGprd3V1dWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzODU2OTAsImV4cCI6MjA3MTk2MTY5MH0.yl-FNSDQ-06xICQVjt_1y47bFL6jQuYWsxvl4i0GteU';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    // DOM helpers
-    const el = (id) => document.getElementById(id);
+    // DOM
+    const loginBtn = document.getElementById('login-btn');
+    const signupBtn = document.getElementById('signup-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const mobileLogoutBtn = document.getElementById('mobile-logout');
+    const authButtons = document.getElementById('auth-buttons');
+    const userInfo = document.getElementById('user-info');
+    const userEmail = document.getElementById('user-email');
+    const mobileUserEmail = document.getElementById('mobile-user-email');
 
-    // Theme: init from localStorage or system
-    const themeToggleBtn = el('theme-toggle'); const themeIcon = el('theme-icon');
-    function setTheme(isDark){
-      const root = document.documentElement;
-      root.classList.toggle('dark', isDark);
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      themeIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-      themeToggleBtn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
-      // Update chart colors
-      applyChartTheme(isDark);
-    }
-    const savedTheme = localStorage.getItem('theme');
-    setTheme(savedTheme ? savedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches);
-    themeToggleBtn.addEventListener('click', () => setTheme(!document.documentElement.classList.contains('dark')));
+    const authSectionMobile = document.getElementById('auth-section');
+    const dashboardMobile = document.getElementById('dashboard');
+    const authSectionDesktop = document.getElementById('auth-section-desktop');
+    const dashboardDesktop = document.getElementById('dashboard-desktop');
 
-    // Auth DOM
-    const loginBtn = el('login-btn'), signupBtn = el('signup-btn'), logoutBtn = el('logout-btn'), mobileLogout = el('mobile-logout');
-    const authButtons = el('auth-buttons'), userInfo = el('user-info'), userEmail = el('user-email'), mobileUser = el('mobile-user');
-    const authSection = el('auth-section'), dashboard = el('dashboard');
-    const loginForm = el('login-form'), signupForm = el('signup-form'), showSignup = el('show-signup'), showLogin = el('show-login');
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form'); // mobile
+    const showSignup = document.getElementById('show-signup');
+    const showLogin = document.getElementById('show-login');
+    const loginSubmit = document.getElementById('login-submit');
+    const signupSubmit = document.getElementById('signup-submit');
 
-    const loginSubmit = el('login-submit'), signupSubmit = el('signup-submit');
-    const loginEye = el('login-eye'), signupEye = el('signup-eye'), signupEye2 = el('signup-eye2');
-
-    const oauthGoogle = el('oauth-google'), oauthApple = el('oauth-apple'), oauthFacebook = el('oauth-facebook');
-    const oauthGoogle2 = el('oauth-google-2'), oauthApple2 = el('oauth-apple-2'), oauthFacebook2 = el('oauth-facebook-2');
-
-    const saveMetricsBtn = el('save-metrics'), fabMobileSave = el('fab-mobile-save');
-    const notification = el('notification'), notificationMessage = el('notification-message');
+    const saveMetricsBtn = document.getElementById('save-metrics'); // desktop
+    const fabSave = document.getElementById('fab-save'); // mobile FAB
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notification-message');
 
     // Chart
     let performanceChart;
-    const colors = {
-      study: 'rgb(99, 102, 241)',
-      screen: 'rgb(139, 92, 246)',
-      mcq: 'rgb(236, 72, 153)'
-    };
     const chartData = {
       labels: [],
       datasets: [
-        { label: 'Study Time (minutes)', key:'study', data: [], borderColor: colors.study, backgroundColor: 'rgba(99, 102, 241, 0.12)', tension: 0.35, borderWidth: 3, pointRadius: 2, hidden:false },
-        { label: 'Screen Time (minutes)', key:'screen', data: [], borderColor: colors.screen, backgroundColor: 'rgba(139, 92, 246, 0.12)', tension: 0.35, borderWidth: 3, pointRadius: 2, hidden:false },
-        { label: 'MCQ Marks', key:'mcq', data: [], borderColor: colors.mcq, backgroundColor: 'rgba(236, 72, 153, 0.15)', tension: 0.35, borderWidth: 3, pointRadius: 2, yAxisID: 'y1', hidden:false }
+        { label: 'Study Time (minutes)', data: [], borderColor: 'rgb(99, 102, 241)', backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.3, hidden: false },
+        { label: 'Screen Time (minutes)', data: [], borderColor: 'rgb(139, 92, 246)', backgroundColor: 'rgba(139, 92, 246, 0.1)', tension: 0.3, hidden: false },
+        { label: 'MCQ Marks', data: [], borderColor: 'rgb(236, 72, 153)', backgroundColor: 'rgba(236, 72, 153, 0.1)', tension: 0.3, yAxisID: 'y1', hidden: false }
       ]
     };
 
-    // Chart plugin: background for PNG
-    const exportBgPlugin = {
-      id: 'exportBg',
-      beforeDraw(chart, args, opts){ const {ctx, width, height} = chart; ctx.save(); ctx.fillStyle = opts?.color || '#fff'; ctx.fillRect(0,0,width,height); ctx.restore(); }
-    };
-    Chart.register(exportBgPlugin);
-
-    // Notifications
-    function showNotification(message, type='success') {
+    // Helpers
+    function showNotification(message, type = 'success') {
       notificationMessage.textContent = message;
       notification.classList.remove('opacity-0', 'translate-y-4');
-      notification.classList.add(type==='success' ? 'bg-green-600' : 'bg-red-600');
-      notification.style.opacity = '1'; notification.style.transform = 'translateY(0)';
-      setTimeout(()=>{ notification.style.opacity = '0'; notification.style.transform = 'translateY(1rem)'; }, 3000);
+      notification.classList.add(type === 'success' ? 'bg-green-600' : 'bg-red-600');
+      notification.style.opacity = '1';
+      notification.style.transform = 'translateY(0)';
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateY(1rem)';
+      }, 3000);
     }
 
-    // UI state
-    function showDashboard(user){
-      authSection.classList.add('hidden');
-      dashboard.classList.remove('hidden');
+    function isMobile() { return window.matchMedia('(max-width: 767px)').matches; }
+
+    function showDashboard(user) {
+      // Toggle desktop vs mobile containers
+      if (isMobile()) {
+        authSectionMobile.classList.add('hidden');
+        dashboardMobile.classList.remove('hidden');
+      } else {
+        authSectionDesktop?.classList.add('hidden');
+        dashboardDesktop?.classList.remove('hidden');
+      }
       authButtons?.classList.add('hidden');
       userInfo?.classList.remove('hidden');
-      userEmail.textContent = user.email; mobileUser.textContent = user.email;
+      if (userEmail) userEmail.textContent = user.email;
+      if (mobileUserEmail) mobileUserEmail.textContent = user.email;
+
       if (!performanceChart) initChart();
       loadUserData();
     }
-    function showAuth(){
-      dashboard.classList.add('hidden');
-      authSection.classList.remove('hidden');
+
+    function showAuthSection() {
+      if (isMobile()) {
+        authSectionMobile.classList.remove('hidden');
+        dashboardMobile.classList.add('hidden');
+      } else {
+        authSectionDesktop?.classList.remove('hidden');
+        dashboardDesktop?.classList.add('hidden');
+      }
       authButtons?.classList.remove('hidden');
       userInfo?.classList.add('hidden');
-      mobileUser.textContent='';
+      if (mobileUserEmail) mobileUserEmail.textContent = '';
     }
 
-    // Toggle forms
-    loginBtn?.addEventListener('click', ()=>{ signupForm.classList.add('hidden'); loginForm.classList.remove('hidden'); window.scrollTo({top:0,behavior:'smooth'}); });
-    signupBtn?.addEventListener('click', ()=>{ loginForm.classList.add('hidden'); signupForm.classList.remove('hidden'); window.scrollTo({top:0,behavior:'smooth'}); });
-    showSignup?.addEventListener('click',(e)=>{ e.preventDefault(); signupBtn?.click(); });
-    showLogin?.addEventListener('click',(e)=>{ e.preventDefault(); loginBtn?.click(); });
-
-    // Password eye toggles
-    function toggleEye(eyeEl, inputId){
-      const input = el(inputId); if(!eyeEl||!input) return;
-      eyeEl.addEventListener('click',()=>{ input.type = input.type==='password' ? 'text':'password'; eyeEl.innerHTML = input.type==='password' ? '<i class="far fa-eye"></i>' : '<i class="far fa-eye-slash"></i>'; });
+    function openLogin() {
+      loginForm.classList.remove('hidden');
+      signupForm?.classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    toggleEye(loginEye,'login-password'); toggleEye(signupEye,'signup-password'); toggleEye(signupEye2,'signup-confirm');
+    function openSignup() {
+      loginForm.classList.add('hidden');
+      signupForm?.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
-    // Auth state
+    // Top actions
+    loginBtn?.addEventListener('click', openLogin);
+    signupBtn?.addEventListener('click', openSignup);
+    showSignup?.addEventListener('click', (e) => { e.preventDefault(); openSignup(); });
+    showLogin?.addEventListener('click', (e) => { e.preventDefault(); openLogin(); });
+
+    // Auth
     supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user){ showNotification('Logged in!'); showDashboard(session.user); }
-      if (event === 'SIGNED_OUT'){ showNotification('Logged out'); showAuth(); }
+      if (event === 'SIGNED_IN' && session?.user) {
+        showNotification('Login successful!');
+        showDashboard(session.user);
+      }
+      if (event === 'SIGNED_OUT') {
+        showNotification('Logged out');
+        showAuthSection();
+      }
     });
-    (async function init(){
+
+    (async function init() {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) showDashboard(session.user); else showAuth();
+      if (session?.user) showDashboard(session.user);
+      else showAuthSection();
     })();
 
-    // Email/password flows
-    loginSubmit?.addEventListener('click', async (e)=> {
+    loginSubmit?.addEventListener('click', async (e) => {
       e.preventDefault();
-      const email = el('login-email').value.trim();
-      const password = el('login-password').value;
-      if(!email || !password) return showNotification('Please enter email and password','error');
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      if (!email || !password) return showNotification('Please enter both email and password', 'error');
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) showNotification(error.message,'error');
+      if (error) showNotification(error.message, 'error');
     });
-    signupSubmit?.addEventListener('click', async (e)=> {
-      e.preventDefault();
-      const email = el('signup-email').value.trim();
-      const password = el('signup-password').value;
-      const confirm = el('signup-confirm').value;
-      if(!email || !password || !confirm) return showNotification('Please fill all fields','error');
-      if(password !== confirm) return showNotification('Passwords do not match','error');
-      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + '/?verified=1' } });
-      if (error) return showNotification(error.message,'error');
-      showNotification('Signup successful! Check your email to verify.');
-      loginBtn?.click();
-    });
-    logoutBtn?.addEventListener('click', async()=>{ const { error } = await supabase.auth.signOut(); if(error) showNotification(error.message,'error'); });
-    mobileLogout?.addEventListener('click', async()=>{ const { error } = await supabase.auth.signOut(); if(error) showNotification(error.message,'error'); });
 
-    // OAuth wired buttons
-    async function oauthSignIn(provider){
-      try{
-        await supabase.auth.signInWithOAuth({
-          provider,
-          options: {
-            redirectTo: window.location.origin,
-            scopes: provider === 'facebook' ? 'email,public_profile' : undefined,
-            queryParams: provider === 'google' ? { prompt: 'select_account' } : {}
-          }
-        });
-        // Redirect happens automatically
-      }catch(err){ showNotification('OAuth error: ' + (err.message || err),'error'); }
-    }
-    oauthGoogle?.addEventListener('click', ()=> oauthSignIn('google'));
-    oauthApple?.addEventListener('click', ()=> oauthSignIn('apple'));
-    oauthFacebook?.addEventListener('click', ()=> oauthSignIn('facebook'));
-    oauthGoogle2?.addEventListener('click', ()=> oauthSignIn('google'));
-    oauthApple2?.addEventListener('click', ()=> oauthSignIn('apple'));
-    oauthFacebook2?.addEventListener('click', ()=> oauthSignIn('facebook'));
+    signupSubmit?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const confirmPassword = document.getElementById('signup-confirm').value;
+      if (!email || !password || !confirmPassword) return showNotification('Please fill all fields', 'error');
+      if (password !== confirmPassword) return showNotification('Passwords do not match', 'error');
+      const { error } = await supabase.auth.signUp({
+        email, password,
+        options: { emailRedirectTo: window.location.origin + '/?verified=1' }
+      });
+      if (error) return showNotification(error.message, 'error');
+      showNotification('Signup successful! Check your email to verify.');
+      openLogin();
+    });
+
+    logoutBtn?.addEventListener('click', async () => { const { error } = await supabase.auth.signOut(); if (error) showNotification(error.message, 'error'); });
+    mobileLogoutBtn?.addEventListener('click', async () => { const { error } = await supabase.auth.signOut(); if (error) showNotification(error.message, 'error'); });
 
     // Chart setup
-    function buildChips(){
-      const lineSelector = el('line-selector'); lineSelector.innerHTML='';
-      chartData.datasets.forEach(ds => {
-        const chip = document.createElement('button');
-        chip.type='button'; chip.className='line-chip'; chip.setAttribute('aria-pressed', String(!ds.hidden));
-        chip.style.background = ds.borderColor;
-        chip.innerHTML = `<span style="display:inline-block;width:10px;height:10px;background:#fff;border-radius:9999px;opacity:.9"></span> ${ds.key.charAt(0).toUpperCase()+ds.key.slice(1)}`;
-        chip.addEventListener('click', ()=>{ ds.hidden = !ds.hidden; chip.setAttribute('aria-pressed', String(!ds.hidden)); performanceChart.update(); });
-        lineSelector.appendChild(chip);
-      });
-    }
-    function applyChartTheme(isDark){
-      if(!performanceChart) return;
-      const o = performanceChart.options;
-      o.plugins.tooltip.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--tooltipBg').trim();
-      const gridY = getComputedStyle(document.documentElement).getPropertyValue('--gridY').trim();
-      const gridX = getComputedStyle(document.documentElement).getPropertyValue('--gridX').trim();
-      const tickColor = isDark ? '#cbd5e1' : '#374151';
-      o.scales.y.grid.color = gridY; o.scales.x.grid.color = gridX; o.scales.y.ticks.color = tickColor; o.scales.x.ticks.color = tickColor; o.scales.y1.ticks = { color: tickColor };
-      performanceChart.update();
-    }
-    function initChart(){
-      const ctx = el('performance-chart').getContext('2d');
+    function initChart() {
+      const ctx = document.getElementById('performance-chart').getContext('2d');
       performanceChart = new Chart(ctx, {
         type: 'line',
         data: chartData,
         options: {
-          responsive: true, maintainAspectRatio: false,
-          animation: { duration: 700, easing: 'easeOutQuart' },
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 500, easing: 'easeOutQuart' },
           interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: { display: false },
             tooltip: {
-              backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--tooltipBg').trim(),
-              padding: 10,
+              backgroundColor: 'rgba(0,0,0,0.7)',
               callbacks: {
-                label: (ctx) => {
-                  const label = ctx.dataset.label + ': ';
-                  if (ctx.dataset.key === 'mcq') return label + ctx.parsed.y + '/10';
-                  const h = Math.floor(ctx.parsed.y/60), m = ctx.parsed.y%60;
+                label: (context) => {
+                  let label = context.dataset.label ? context.dataset.label + ': ' : '';
+                  if (context.dataset.label === 'MCQ Marks') {
+                    return label + context.parsed.y + '/10';
+                  }
+                  const h = Math.floor(context.parsed.y / 60), m = context.parsed.y % 60;
                   return label + `${h}h ${m}m`;
                 }
               }
-            },
-            exportBg: { color: '#ffffff' }
+            }
           },
           scales: {
             y: {
               title: { display: true, text: 'Time (minutes)' },
-              ticks: { color: '#374151', callback: v => `${Math.floor(v/60)}h ${v%60}m` },
-              grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--gridY').trim() }
+              ticks: { callback: v => `${Math.floor(v/60)}h ${v%60}m` }
             },
-            y1: { position: 'right', min:0, max:10, grid: { drawOnChartArea:false }, title: { display:true, text:'MCQ' } },
-            x: { grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--gridX').trim() }, ticks: { color: '#374151' } }
+            y1: { position: 'right', min: 0, max: 10, grid: { drawOnChartArea: false }, title: { display: true, text: 'MCQ' } }
           }
         }
       });
-      buildChips();
-      applyChartTheme(document.documentElement.classList.contains('dark'));
+
+      document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const metric = btn.getAttribute('data-metric');
+          const index = metric === 'study' ? 0 : metric === 'screen' ? 1 : 2;
+          performanceChart.data.datasets[index].hidden = !performanceChart.data.datasets[index].hidden;
+          btn.classList.toggle('active');
+          performanceChart.update();
+        });
+      });
     }
 
-    // Download chart as PNG
-    el('download-chart')?.addEventListener('click', ()=> {
-      if(!performanceChart) return;
-      const link = document.createElement('a');
-      link.download = `scholartrack_chart_${new Date().toLocaleString('en-CA').replace(/[,: ]/g,'-')}.png`;
-      link.href = performanceChart.toBase64Image('image/png', 1);
-      link.click();
-    });
+    // Load data
+    async function loadUserData() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    // Data operations
-    async function loadUserData(){
-      const { data: { user } } = await supabase.auth.getUser(); if(!user) return;
-      const { data, error } = await supabase.from('user_metrics')
-        .select('date,study_time_minutes,screen_time_minutes,mcq_marks').eq('user_id', user.id).order('date', { ascending:true });
-      if(error) return showNotification('Error loading data: ' + error.message, 'error');
+      const { data, error } = await supabase
+        .from('user_metrics')
+        .select('date,study_time_minutes,screen_time_minutes,mcq_marks')
+        .eq('user_id', user.id)
+        .order('date', { ascending: true });
 
-      chartData.labels = []; chartData.datasets.forEach(ds=>ds.data=[]);
-      data.forEach(row=>{
-        const label = new Date(row.date).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+      if (error) return showNotification('Error loading data: ' + error.message, 'error');
+
+      // Reset chart
+      chartData.labels = [];
+      chartData.datasets[0].data = [];
+      chartData.datasets[1].data = [];
+      chartData.datasets[2].data = [];
+
+      // Fill chart
+      data.forEach(row => {
+        const d = new Date(row.date);
+        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         chartData.labels.push(label);
         chartData.datasets[0].data.push(row.study_time_minutes || 0);
         chartData.datasets[1].data.push(row.screen_time_minutes || 0);
         chartData.datasets[2].data.push(row.mcq_marks || 0);
       });
       performanceChart?.update();
+
       calculateAverages(data);
       updateSummaryCard(data);
     }
-    function calculateAverages(rows){
-      if(!rows || rows.length===0){ el('avg-study').textContent='0h 0m'; el('avg-screen').textContent='0h 0m'; el('avg-mcq').textContent='0/10'; return; }
-      const totalStudy = rows.reduce((s,r)=>s+(r.study_time_minutes||0),0);
-      const totalScreen = rows.reduce((s,r)=>s+(r.screen_time_minutes||0),0);
-      const totalMCQ = rows.reduce((s,r)=>s+(r.mcq_marks||0),0);
-      const avgStudy = Math.round(totalStudy/rows.length), avgScreen = Math.round(totalScreen/rows.length), avgMCQ = (totalMCQ/rows.length).toFixed(1);
-      const sh = Math.floor(avgStudy/60), sm = avgStudy%60, sch = Math.floor(avgScreen/60), scm = avgScreen%60;
-      el('avg-study').textContent = `${sh}h ${sm}m`; el('avg-screen').textContent = `${sch}h ${scm}m`; el('avg-mcq').textContent = `${avgMCQ}/10`;
+
+    function calculateAverages(rows) {
+      if (!rows || rows.length === 0) {
+        document.getElementById('avg-study').textContent = '0h 0m';
+        document.getElementById('avg-screen').textContent = '0h 0m';
+        document.getElementById('avg-mcq').textContent = '0/10';
+        return;
+      }
+      const totalStudy = rows.reduce((s, r) => s + (r.study_time_minutes || 0), 0);
+      const totalScreen = rows.reduce((s, r) => s + (r.screen_time_minutes || 0), 0);
+      const totalMCQ = rows.reduce((s, r) => s + (r.mcq_marks || 0), 0);
+      const avgStudy = Math.round(totalStudy / rows.length);
+      const avgScreen = Math.round(totalScreen / rows.length);
+      const avgMCQ = (totalMCQ / rows.length).toFixed(1);
+
+      const sh = Math.floor(avgStudy / 60), sm = avgStudy % 60;
+      const sch = Math.floor(avgScreen / 60), scm = avgScreen % 60;
+
+      document.getElementById('avg-study').textContent = `${sh}h ${sm}m`;
+      document.getElementById('avg-screen').textContent = `${sch}h ${scm}m`;
+      document.getElementById('avg-mcq').textContent = `${avgMCQ}/10`;
     }
-    function updateSummaryCard(rows){
+
+    function updateSummaryCard(rows) {
+      const targetMinutes = 180; // 3h target per day
+      // Use last 7 days average
       const last7 = rows.slice(-7);
-      const avg = last7.length ? Math.round(last7.reduce((s,r)=>s+(r.study_time_minutes||0),0)/last7.length) : 0;
-      const percent = Math.min(100, Math.round((avg/180)*100)); // target 3h
-      const h = Math.floor(avg/60), m = avg%60;
-      el('summary-title').textContent = `${h}h ${m}m`; el('summary-label').textContent = 'Daily target: 3h'; el('summary-percent').textContent = percent + '%';
-      el('summary-progress').style.width = percent + '%';
+      const avgStudy = last7.length ? Math.round(last7.reduce((s,r)=>s+(r.study_time_minutes||0),0) / last7.length) : 0;
+      const percent = Math.min(100, Math.round((avgStudy / targetMinutes) * 100));
+
+      const h = Math.floor(avgStudy / 60), m = avgStudy % 60;
+      const title = `${h}h ${m}m`;
+      const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+      setEl('summary-title', title);
+      setEl('summary-label', 'Daily target: 3h');
+      setEl('summary-percent', percent + '%');
+      const bar = document.getElementById('summary-progress');
+      if (bar) bar.style.width = percent + '%';
+
+      setEl('summary-title-desktop', title);
+      setEl('summary-label-desktop', 'Daily target: 3h');
+      setEl('summary-percent-desktop', percent + '%');
+      const barD = document.getElementById('summary-progress-desktop');
+      if (barD) barD.style.width = percent + '%';
     }
 
-    // Save metrics (desktop + mobile FAB)
-    async function saveMetrics(){
-      const studyHours = parseInt(el('study-hours').value) || 0;
-      const studyMinutes = parseInt(el('study-minutes').value) || 0;
-      const screenHours = parseInt(el('screen-hours').value) || 0;
-      const screenMinutes = parseInt(el('screen-minutes').value) || 0;
-      let mcqScore = parseInt(el('mcq-score').value); if (isNaN(mcqScore)) mcqScore=0; mcqScore = Math.max(0, Math.min(10, mcqScore));
-      const studyTimeMinutes = studyHours*60 + studyMinutes, screenTimeMinutes = screenHours*60 + screenMinutes;
-      if(studyTimeMinutes===0 && screenTimeMinutes===0 && mcqScore===0) return showNotification('Please enter at least one metric','error');
+    // Save metrics (shared for FAB + desktop button)
+    async function saveMetrics() {
+      const studyHours = parseInt(document.getElementById('study-hours').value) || 0;
+      const studyMinutes = parseInt(document.getElementById('study-minutes').value) || 0;
+      const screenHours = parseInt(document.getElementById('screen-hours').value) || 0;
+      const screenMinutes = parseInt(document.getElementById('screen-minutes').value) || 0;
+      let mcqScore = parseInt(document.getElementById('mcq-score').value);
+      if (isNaN(mcqScore)) mcqScore = 0;
+      mcqScore = Math.max(0, Math.min(10, mcqScore));
 
-      const { data: { user } } = await supabase.auth.getUser(); if(!user) return showNotification('You must be logged in to save metrics','error');
-      const todayLocal = new Date().toLocaleDateString('en-CA');
+      const studyTimeMinutes = studyHours * 60 + studyMinutes;
+      const screenTimeMinutes = screenHours * 60 + screenMinutes;
 
-      const { error } = await supabase.from('user_metrics').upsert({
-        user_id: user.id, date: todayLocal,
-        study_time_minutes: studyTimeMinutes, screen_time_minutes: screenTimeMinutes, mcq_marks: mcqScore
-      }, { onConflict: 'user_id,date' });
+      if (studyTimeMinutes === 0 && screenTimeMinutes === 0 && mcqScore === 0) {
+        return showNotification('Please enter at least one metric', 'error');
+      }
 
-      if(error) showNotification('Error saving metrics: ' + error.message, 'error');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return showNotification('You must be logged in to save metrics', 'error');
+
+      const todayLocal = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+
+      const { error } = await supabase
+        .from('user_metrics')
+        .upsert({
+          user_id: user.id,
+          date: todayLocal,
+          study_time_minutes: studyTimeMinutes,
+          screen_time_minutes: screenTimeMinutes,
+          mcq_marks: mcqScore
+        }, { onConflict: 'user_id,date' });
+
+      if (error) showNotification('Error saving metrics: ' + error.message, 'error');
       else {
         showNotification('Metrics saved!');
-        ['study-hours','study-minutes','screen-hours','screen-minutes','mcq-score'].forEach(id => { const i = el(id); if(i) i.value=''; });
+        ['study-hours','study-minutes','screen-hours','screen-minutes','mcq-score']
+          .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
         loadUserData();
       }
     }
     saveMetricsBtn?.addEventListener('click', saveMetrics);
-    fabMobileSave?.addEventListener('click', saveMetrics);
+    fabSave?.addEventListener('click', saveMetrics);
+
+    // Re-evaluate layout on resize (switch mobile/desktop sections)
+    window.addEventListener('resize', async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) showDashboard(user);
+      else showAuthSection();
+    });
   </script>
 </body>
 </html>
